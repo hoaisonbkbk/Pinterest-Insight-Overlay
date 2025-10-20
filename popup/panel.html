@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pinterest Info Panel</title>
+    <link rel="stylesheet" href="../style.css" />
+    <style>
+      body {
+        width: 320px;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #fff;
+        color: #333;
+      }
+
+      .panel {
+        padding: 12px;
+      }
+
+      .pin-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      }
+
+      .pin-image {
+        width: 100%;
+        border-radius: 8px;
+      }
+
+      .pin-title {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .pin-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: #666;
+      }
+
+      .pin-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .icon {
+        width: 14px;
+        height: 14px;
+      }
+
+      .refresh {
+        margin-top: 8px;
+        padding: 6px 10px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        background: #e60023;
+        color: #fff;
+        font-weight: 500;
+      }
+
+      .refresh:hover {
+        background: #c7001e;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="panel">
+      <div class="pin-card">
+        <img
+          src="https://via.placeholder.com/280x180"
+          alt="Pin"
+          class="pin-image"
+        />
+        <div class="pin-title">Summer Dress Collection</div>
+
+        <div class="pin-meta">
+          <span>❤️ 245</span>
+          <span>💬 37</span>
+          <span>📌 120</span>
+        </div>
+
+        <button class="refresh" id="refresh-btn">↻ Refresh Info</button>
+      </div>
+    </div>
+
+    <script src="panel.js"></script>
+  </body>
+</html>

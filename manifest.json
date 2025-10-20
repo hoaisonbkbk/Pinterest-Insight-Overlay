@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Pinterest Info Extension",
+  "version": "1.0.0",
+  "description": "Hiển thị thông tin cơ bản của Pin như reactions, comments, saves,...",
+  "permissions": ["scripting", "activeTab"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/panel.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.pinterest.com/*"],
+      "js": ["src/content-script.js"]
+    }
+  ]
+}
