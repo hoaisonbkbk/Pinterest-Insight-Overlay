@@ -97,7 +97,7 @@ class PinterestHelper {
         let save = Helper.formatNumberLocale(info.aggregated_pin_data.aggregated_stats.saves ?? 0);
         let repin = Helper.formatNumberLocale(info.repin_count ?? 0);
         let share = Helper.formatNumberLocale(info.share_count ?? 0);
-
+        let linkImage = info.images?.orig?.url ?? "";
         // Giờ là gán dữ liệu vào overlay
         const likes = document.createElement("div");
         likes.textContent = `❤️ Reaction: ${reaction}`;
@@ -130,13 +130,20 @@ class PinterestHelper {
         });
         box.appendChild(btn);
 
-
+        const link = document.createElement("a");
+        link.href = linkImage ?? "#";
+        link.target = "_blank";
+        link.textContent = "🔗 Open Pin";
+        link.style.color = "#fff";
+        link.style.textDecoration = "none";
+        box.appendChild(link);
 
         // Gắn overlay vào pin
         pinEl.style.position = pinEl.style.position || "relative";
         pinEl.appendChild(box);
     }
 
+    
     // Hiển thị tooltip chi tiết khi nhấn nút
     /**
      * Hiển thị tooltip với thông tin chi tiết của pin
@@ -193,7 +200,7 @@ class PinterestHelper {
     </div>
     <div style="margin-top:8px;text-align:left;">
       
-      <a href="${info.link ?? "#"}" target="_blank" style="color:#e60023;font-weight:600;text-decoration:none;">Open</a>
+      <a href="${info.link ?? "#"}" target="_blank" style="color:#e60023;font-weight:600;text-decoration:none;">🔗 Open Link</a>
     </div>
   `;
         pinEl.appendChild(t);
