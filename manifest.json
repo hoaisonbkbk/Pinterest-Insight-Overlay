@@ -18,7 +18,13 @@
   "content_scripts": [
     {
       "matches": ["*://*.pinterest.com/*"],
-      "js": ["src/content-script.js"]
+      "js": ["utils/Helper.js","utils/PinterestHelper.js", "content-script.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["utils/*.js"],
+      "matches": ["*://*/*"]
     }
   ]
 }
