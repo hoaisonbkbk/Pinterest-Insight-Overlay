@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Pinterest Info Extension",
+  "name": "Pinterest Insight",
   "version": "1.0.0",
-  "description": "Hiển thị thông tin cơ bản của Pin như reactions, comments, saves,...",
+  "description": "Pinterest Insight Overlay is a lightweight Chrome Extension that lets you instantly view detailed information about any Pinterest Pin — without leaving the page.",
   "permissions": ["scripting", "activeTab"],
   "background": {
     "service_worker": "background.js"
