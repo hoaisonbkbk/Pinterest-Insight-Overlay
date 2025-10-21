@@ -116,27 +116,80 @@ class PinterestHelper {
         box.appendChild(repins);
         box.appendChild(shares);
 
+        //-- Container cho các nút
+        const btnContainer = document.createElement("div");
+        btnContainer.style.display = "contents";
+        btnContainer.style.fontSize = "16px";
+      
+
         //-- Nút mở info chi tiết
-        const btn = document.createElement("button");
-        btn.textContent = "ℹ️ Info";
-        btn.style.display = "contents";
-        btn.style.cursor = "pointer";
-        btn.style.border = "none";
-        btn.style.color = "#fff";
-        btn.style.background = "transparent";
-        btn.addEventListener("click", (e) => {
+        const infoBtn = document.createElement("button");
+        infoBtn.textContent = "ℹ️";
+        infoBtn.style.display = "contents";
+        infoBtn.style.cursor = "pointer";
+        infoBtn.style.border = "none";
+        infoBtn.style.color = "#fff";
+        infoBtn.style.background = "transparent";
+        infoBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             this.showDetailTooltip(pinEl, info);
         });
-        box.appendChild(btn);
 
-        const link = document.createElement("a");
-        link.href = linkImage ?? "#";
-        link.target = "_blank";
-        link.textContent = "🔗 Open Pin";
-        link.style.color = "#fff";
-        link.style.textDecoration = "none";
-        box.appendChild(link);
+        //-- Nút download
+        const downloadBtn = document.createElement("button");
+        downloadBtn.textContent = "🖼️";
+        downloadBtn.style.display = "contents";
+        downloadBtn.style.cursor = "pointer";
+        downloadBtn.style.border = "none";
+        downloadBtn.style.color = "#fff";
+        downloadBtn.style.background = "transparent";
+        downloadBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            // TODO: Implement download functionality
+            const imageUrl = info.images?.orig?.url;
+            if (imageUrl) {
+                const a = document.createElement('a');
+                a.href = imageUrl;
+                a.target = "_blank";
+                a.download = `pinterest_${info.id}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        });
+
+        //-- Nút share
+        const shareBtn = document.createElement("button");
+        shareBtn.textContent = "🔗";
+        shareBtn.style.display = "contents";
+        shareBtn.style.cursor = "pointer";
+        shareBtn.style.border = "none";
+        shareBtn.style.color = "#fff";
+        shareBtn.style.background = "transparent";
+        shareBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            // TODO: Implement share functionality
+            if (navigator.share) {
+                navigator.share({
+                    title: info.title || 'Pinterest Pin',
+                    text: info.description || '',
+                    url: `https://www.pinterest.com/pin/${info.id}/`
+                }).catch(console.error);
+            }
+        });
+
+        btnContainer.appendChild(infoBtn);
+        btnContainer.appendChild(downloadBtn);
+        btnContainer.appendChild(shareBtn);
+        box.appendChild(btnContainer);
+
+        // const link = document.createElement("a");
+        // link.href = linkImage ?? "#";
+        // link.target = "_blank";
+        // link.textContent = "🔗 Open Pin";
+        // link.style.color = "#fff";
+        // link.style.textDecoration = "none";
+        // box.appendChild(link);
 
         // Gắn overlay vào pin
         pinEl.style.position = pinEl.style.position || "relative";
