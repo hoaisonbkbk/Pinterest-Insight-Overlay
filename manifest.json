@@ -15,6 +15,7 @@
       "128": "icons/icon128.png"
     }
   },
+
   "content_scripts": [
     {
       "matches": ["*://*.pinterest.com/*"],
@@ -23,7 +24,12 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["utils/*.js"],
+      "resources": [
+        "utils/*.js",
+        "popup/libs/**",
+        "popup/css/**",
+        "popup/fonts/**"
+      ],
       "matches": ["*://*/*"]
     }
   ]

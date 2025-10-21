@@ -1,15 +1,19 @@
-class PinterestPanel {
+class PinterestDashboard {
     constructor() {
         this.currentPage = 1;
         this.recordsPerPage = 10;
         this.sortField = 'createAt';
         this.sortDirection = 'desc';
         this.searchTerm = '';
+        this.dateFilter = 'all';
+        this.boardFilter = 'all';
         this.data = [];
         this.toast = new bootstrap.Toast(document.getElementById('toast'));
         
         // Load data from localStorage or initialize with fake data
         this.loadData();
+        this.updateStats();
+        this.populateBoardFilter();
         
         // Initialize event listeners
         this.initializeEventListeners();
@@ -42,11 +46,23 @@ class PinterestPanel {
     }
 
     initializeFakeData() {
-        // Generate 50 fake records
-        const boards = ['DIY Projects', 'Fashion Inspiration', 'Home Decor', 'Recipe Collection', 'Travel Goals'];
-        const authors = ['craftlover', 'fashionista', 'homedesigner', 'foodie_chef', 'wanderlust'];
+        const boards = [
+            { name: 'DIY Projects', category: 'Crafts' },
+            { name: 'Fashion Inspiration', category: 'Fashion' },
+            { name: 'Home Decor', category: 'Home' },
+            { name: 'Recipe Collection', category: 'Food' },
+            { name: 'Travel Goals', category: 'Travel' }
+        ];
         
-        for (let i = 1; i <= 50; i++) {
+        const authors = [
+            { username: 'craftlover', followers: 15000 },
+            { username: 'fashionista', followers: 25000 },
+            { username: 'homedesigner', followers: 18000 },
+            { username: 'foodie_chef', followers: 30000 },
+            { username: 'wanderlust', followers: 22000 }
+        ];
+        
+        for (let i = 1; i <= 100; i++) {
             const date = new Date();
             date.setDate(date.getDate() - Math.floor(Math.random() * 30));
             
@@ -55,16 +71,18 @@ class PinterestPanel {
             
             this.data.push({
                 id: Math.floor(Math.random() * 1000000000),
-                reaction: Math.floor(Math.random() * 1000),
-                comment: Math.floor(Math.random() * 200),
-                save: Math.floor(Math.random() * 500),
-                repin: Math.floor(Math.random() * 300),
-                share: Math.floor(Math.random() * 100),
-                imageUrl: `https://source.unsplash.com/random/100x100?sig=${i}`,
+                reaction: Math.floor(Math.random() * 1000) + 100,
+                comment: Math.floor(Math.random() * 200) + 20,
+                save: Math.floor(Math.random() * 500) + 50,
+                repin: Math.floor(Math.random() * 300) + 30,
+                share: Math.floor(Math.random() * 100) + 10,
+                imageUrl: `https://source.unsplash.com/random/200x300?sig=${i}`,
                 createAt: date.toISOString(),
-                author: authors[authorIndex],
-                board: boards[boardIndex],
-                boardUrl: `https://pinterest.com/${authors[authorIndex]}/${boards[boardIndex].toLowerCase().replace(' ', '-')}`,
+                author: authors[authorIndex].username,
+                authorFollowers: authors[authorIndex].followers,
+                board: boards[boardIndex].name,
+                boardCategory: boards[boardIndex].category,
+                boardUrl: `https://pinterest.com/${authors[authorIndex].username}/${boards[boardIndex].name.toLowerCase().replace(' ', '-')}`,
                 pinUrl: `https://pinterest.com/pin/${Math.floor(Math.random() * 1000000000)}`
             });
         }
@@ -87,6 +105,20 @@ class PinterestPanel {
         // Records per page
         document.getElementById('recordsPerPage').addEventListener('change', (e) => {
             this.recordsPerPage = parseInt(e.target.value);
+            this.currentPage = 1;
+            this.renderTable();
+        });
+
+        // Date filter
+        document.getElementById('dateFilter').addEventListener('change', (e) => {
+            this.dateFilter = e.target.value;
+            this.currentPage = 1;
+            this.renderTable();
+        });
+
+        // Board filter
+        document.getElementById('boardFilter').addEventListener('change', (e) => {
+            this.boardFilter = e.target.value;
             this.currentPage = 1;
             this.renderTable();
         });
@@ -117,6 +149,33 @@ class PinterestPanel {
         document.getElementById('exportBtn').addEventListener('click', () => this.exportToCSV());
     }
 
+    updateStats() {
+        const stats = this.data.reduce((acc, item) => {
+            acc.reactions += item.reaction;
+            acc.comments += item.comment;
+            acc.shares += item.share;
+            acc.saves += item.save;
+            return acc;
+        }, { reactions: 0, comments: 0, shares: 0, saves: 0 });
+
+        document.getElementById('totalReactions').textContent = this.formatNumber(stats.reactions);
+        document.getElementById('totalComments').textContent = this.formatNumber(stats.comments);
+        document.getElementById('totalShares').textContent = this.formatNumber(stats.shares);
+        document.getElementById('totalSaves').textContent = this.formatNumber(stats.saves);
+    }
+
+    populateBoardFilter() {
+        const boards = [...new Set(this.data.map(item => item.board))].sort();
+        const select = document.getElementById('boardFilter');
+        
+        boards.forEach(board => {
+            const option = document.createElement('option');
+            option.value = board;
+            option.textContent = board;
+            select.appendChild(option);
+        });
+    }
+
     handleSort(field) {
         if (this.sortField === field) {
             this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -130,7 +189,29 @@ class PinterestPanel {
     getFilteredData() {
         return this.data.filter(item => {
             const searchStr = `${item.id} ${item.author} ${item.board}`.toLowerCase();
-            return searchStr.includes(this.searchTerm);
+            const matchesSearch = searchStr.includes(this.searchTerm);
+            
+            let matchesDate = true;
+            const itemDate = new Date(item.createAt);
+            const now = new Date();
+            
+            switch(this.dateFilter) {
+                case 'today':
+                    matchesDate = itemDate.toDateString() === now.toDateString();
+                    break;
+                case 'week':
+                    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    matchesDate = itemDate >= weekAgo;
+                    break;
+                case 'month':
+                    matchesDate = itemDate.getMonth() === now.getMonth() &&
+                                itemDate.getFullYear() === now.getFullYear();
+                    break;
+            }
+            
+            const matchesBoard = this.boardFilter === 'all' || item.board === this.boardFilter;
+            
+            return matchesSearch && matchesDate && matchesBoard;
         });
     }
 
@@ -171,12 +252,27 @@ class PinterestPanel {
 
     renderStats(item) {
         return `
-            <div class="d-flex flex-wrap gap-1">
-                <span class="stats-badge">❤️ ${this.formatNumber(item.reaction)}</span>
-                <span class="stats-badge">💬 ${this.formatNumber(item.comment)}</span>
-                <span class="stats-badge">📌 ${this.formatNumber(item.save)}</span>
-                <span class="stats-badge">🔁 ${this.formatNumber(item.repin)}</span>
-                <span class="stats-badge">📤 ${this.formatNumber(item.share)}</span>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="stats-badge">
+                    <i class="fas fa-heart text-danger"></i>
+                    ${this.formatNumber(item.reaction)}
+                </span>
+                <span class="stats-badge">
+                    <i class="fas fa-comment text-primary"></i>
+                    ${this.formatNumber(item.comment)}
+                </span>
+                <span class="stats-badge">
+                    <i class="fas fa-bookmark text-success"></i>
+                    ${this.formatNumber(item.save)}
+                </span>
+                <span class="stats-badge">
+                    <i class="fas fa-retweet text-info"></i>
+                    ${this.formatNumber(item.repin)}
+                </span>
+                <span class="stats-badge">
+                    <i class="fas fa-share-alt text-secondary"></i>
+                    ${this.formatNumber(item.share)}
+                </span>
             </div>
         `;
     }
@@ -189,41 +285,64 @@ class PinterestPanel {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = paginatedData.map(item => `
             <tr>
-                <td class="text-nowrap">${item.id}</td>
+                <td class="text-nowrap">
+                    <span class="badge bg-light text-dark">
+                        ${item.id}
+                    </span>
+                </td>
                 <td>
-                    <img src="${item.imageUrl}" alt="Pin thumbnail" class="thumbnail">
+                    <img src="${item.imageUrl}" 
+                         alt="Pin thumbnail" 
+                         class="thumbnail" 
+                         data-bs-toggle="tooltip" 
+                         title="Click to view original">
                 </td>
                 <td>${this.renderStats(item)}</td>
                 <td>
                     <a href="https://pinterest.com/${item.author}" 
                        target="_blank" 
                        class="text-decoration-none">
-                        @${item.author}
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="https://ui-avatars.com/api/?name=${item.author}&size=32&background=random" 
+                                 class="rounded-circle" 
+                                 width="32" 
+                                 height="32">
+                            <div>
+                                <div>@${item.author}</div>
+                                <small class="text-muted">${this.formatNumber(item.authorFollowers)} followers</small>
+                            </div>
+                        </div>
                     </a>
                 </td>
                 <td>
                     <a href="${item.boardUrl}" 
                        target="_blank"
-                       class="text-decoration-none">
-                        ${item.board}
+                       class="board-link">
+                        <div>${item.board}</div>
+                        <small class="text-muted">${item.boardCategory}</small>
                     </a>
                 </td>
-                <td class="text-nowrap">${this.formatDate(item.createAt)}</td>
+                <td class="text-nowrap">
+                    <div>${this.formatDate(item.createAt)}</div>
+                </td>
                 <td>
                     <div class="btn-group">
                         <a href="${item.pinUrl}" 
                            target="_blank" 
-                           class="btn btn-sm btn-outline-primary" 
+                           class="btn btn-sm btn-outline-primary btn-action" 
+                           data-bs-toggle="tooltip" 
                            title="Open pin">
                             <i class="fas fa-external-link-alt"></i>
                         </a>
-                        <button class="btn btn-sm btn-outline-success" 
-                                onclick="window.pinterestPanel.copyToClipboard('${item.imageUrl}')"
+                        <button class="btn btn-sm btn-outline-success btn-action" 
+                                onclick="window.pinterestDashboard.copyToClipboard('${item.imageUrl}')"
+                                data-bs-toggle="tooltip" 
                                 title="Copy image URL">
                             <i class="fas fa-copy"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-info" 
-                                onclick="window.pinterestPanel.downloadImage('${item.imageUrl}', ${item.id})"
+                        <button class="btn btn-sm btn-outline-info btn-action" 
+                                onclick="window.pinterestDashboard.downloadImage('${item.imageUrl}', ${item.id})"
+                                data-bs-toggle="tooltip" 
                                 title="Download image">
                             <i class="fas fa-download"></i>
                         </button>
@@ -231,6 +350,12 @@ class PinterestPanel {
                 </td>
             </tr>
         `).join('');
+
+        // Initialize tooltips
+        const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltips.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
 
         // Update pagination info
         document.getElementById('startRecord').textContent = 
@@ -249,11 +374,11 @@ class PinterestPanel {
 
         // Update sort icons
         document.querySelectorAll('th[data-sort]').forEach(th => {
-            const icon = th.querySelector('.sort-icon');
+            const icon = th.querySelector('i.fas');
             if (th.dataset.sort === this.sortField) {
-                icon.textContent = this.sortDirection === 'asc' ? '↑' : '↓';
+                icon.className = `fas fa-sort-${this.sortDirection === 'asc' ? 'up' : 'down'} ms-1`;
             } else {
-                icon.textContent = '↕️';
+                icon.className = 'fas fa-sort ms-1';
             }
         });
     }
@@ -288,7 +413,8 @@ class PinterestPanel {
         const sortedData = this.getSortedData(filteredData);
         
         const headers = ['Pin ID', 'Reactions', 'Comments', 'Saves', 'Repins', 'Shares', 
-                        'Image URL', 'Created At', 'Author', 'Board', 'Board URL', 'Pin URL'];
+                        'Image URL', 'Created At', 'Author', 'Author Followers',
+                        'Board', 'Board Category', 'Board URL', 'Pin URL'];
         
         const csvContent = [
             headers.join(','),
@@ -302,7 +428,9 @@ class PinterestPanel {
                 item.imageUrl,
                 item.createAt,
                 item.author,
+                item.authorFollowers,
                 item.board,
+                item.boardCategory,
                 item.boardUrl,
                 item.pinUrl
             ].join(','))
@@ -312,7 +440,7 @@ class PinterestPanel {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `pinterest_pins_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `pinterest_insights_${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -324,5 +452,11 @@ class PinterestPanel {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.pinterestPanel = new PinterestPanel();
+    window.pinterestDashboard = new PinterestDashboard();
+    
+    // Enable all tooltips
+    const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltips.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });

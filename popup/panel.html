@@ -1,98 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Pinterest Info Panel</title>
-    <link rel="stylesheet" href="../style.css" />
+<head>
+    <meta charset="UTF-8">
+    <title>Pinterest Insight Panel</title>
+    <link href="libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="libs/fontawesome/all.css" rel="stylesheet">
     <style>
-      body {
-        width: 320px;
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: #fff;
-        color: #333;
-      }
-
-      .panel {
-        padding: 12px;
-      }
-
-      .pin-card {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        border: 1px solid #e0e0e0;
-        border-radius: 10px;
-        padding: 10px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      }
-
-      .pin-image {
-        width: 100%;
-        border-radius: 8px;
-      }
-
-      .pin-title {
-        font-weight: 600;
-        font-size: 14px;
-      }
-
-      .pin-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 12px;
-        color: #666;
-      }
-
-      .pin-meta span {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      .icon {
-        width: 14px;
-        height: 14px;
-      }
-
-      .refresh {
-        margin-top: 8px;
-        padding: 6px 10px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        background: #e60023;
-        color: #fff;
-        font-weight: 500;
-      }
-
-      .refresh:hover {
-        background: #c7001e;
-      }
+        body {
+            width: 800px;
+            min-height: 600px;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .panel-container {
+            padding: 20px;
+        }
+        .search-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .table-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .table th {
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+        }
+        .table th:hover {
+            background-color: #f8f9fa;
+        }
+        .sort-icon {
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+        .thumbnail {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .pagination {
+            margin-bottom: 0;
+        }
+        .stats-badge {
+            font-size: 0.85em;
+            padding: 0.25em 0.5em;
+            border-radius: 4px;
+            background: #f0f0f0;
+            color: #666;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 4px;
+            white-space: nowrap;
+        }
+        .table td {
+            vertical-align: middle;
+        }
     </style>
-  </head>
-
-  <body>
-    <div class="panel">
-      <div class="pin-card">
-        <img
-          src="https://via.placeholder.com/280x180"
-          alt="Pin"
-          class="pin-image"
-        />
-        <div class="pin-title">Summer Dress Collection</div>
-
-        <div class="pin-meta">
-          <span>❤️ 245</span>
-          <span>💬 37</span>
-          <span>📌 120</span>
+</head>
+<body>
+    <div class="panel-container">
+        <!-- Search Section -->
+        <div class="search-container">
+            <div class="row align-items-center">
+                <div class="col">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search by ID, author, board...">
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <select class="form-select" id="recordsPerPage">
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-primary" id="exportBtn">
+                        <i class="fas fa-download me-1"></i> Export CSV
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <button class="refresh" id="refresh-btn">↻ Refresh Info</button>
-      </div>
+        <!-- Table Section -->
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-hover" id="pinsTable">
+                    <thead>
+                        <tr>
+                            <th data-sort="id">Pin ID <span class="sort-icon">↕️</span></th>
+                            <th data-sort="thumbnail">Image</th>
+                            <th data-sort="stats">Stats</th>
+                            <th data-sort="author">Author</th>
+                            <th data-sort="board">Board</th>
+                            <th data-sort="createAt">Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Data will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted">
+                    Showing <span id="startRecord">1</span> to <span id="endRecord">10</span> of <span id="totalRecords">0</span> records
+                </div>
+                <nav>
+                    <ul class="pagination">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" id="prevPage">Previous</a>
+                        </li>
+                        <li class="page-item active">
+                            <a class="page-link" href="#">1</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#" id="nextPage">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
     </div>
 
+    <!-- Toast Notifications -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong class="me-auto" id="toastTitle">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
+    </div>
+
+    <script src="libs/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="panel.js"></script>
-  </body>
+</body>
 </html>
