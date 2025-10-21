@@ -161,29 +161,20 @@ class PinterestHelper {
             }
         });
 
-        //-- Nút share
-        const shareBtn = document.createElement("button");
-        shareBtn.textContent = "🔗";
-        shareBtn.style.display = "contents";
-        shareBtn.style.cursor = "pointer";
-        shareBtn.style.border = "none";
-        shareBtn.style.color = "#fff";
-        shareBtn.style.background = "transparent";
-        shareBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            // TODO: Implement share functionality
-            if (navigator.share) {
-                navigator.share({
-                    title: info.title || 'Pinterest Pin',
-                    text: info.description || '',
-                    url: `https://www.pinterest.com/pin/${info.id}/`
-                }).catch(console.error);
-            }
-        });
+        // Nút link
+        const linkWebsite = document.createElement("a");
+        linkWebsite.href = info?.link ?? "#";
+        linkWebsite.target = "_blank";
+        linkWebsite.text ="🔗";
+        linkWebsite.style.cursor = "pointer";
+        linkWebsite.style.color = "#fff";
+        linkWebsite.style.textDecoration = "none";
+        linkWebsite.style.display = "contents";
+        
 
         btnContainer.appendChild(infoBtn);
         btnContainer.appendChild(downloadBtn);
-        btnContainer.appendChild(shareBtn);
+        btnContainer.appendChild(linkWebsite);
         box.appendChild(btnContainer);
 
         // const link = document.createElement("a");
