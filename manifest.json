@@ -3,7 +3,7 @@
   "name": "Pinterest Insight",
   "version": "1.0.0",
   "description": "Pinterest Insight Overlay is a lightweight Chrome Extension that lets you instantly view detailed information about any Pinterest Pin — without leaving the page.",
-  "permissions": ["scripting", "activeTab"],
+  "permissions": ["scripting", "activeTab", "storage"],
   "background": {
     "service_worker": "background.js"
   },

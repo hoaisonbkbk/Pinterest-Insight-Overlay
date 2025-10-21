@@ -1,7 +1,7 @@
 
 // content-script.js
+console.log('Pinterest Insight Overlay content script loaded');
 
-console.log("Pinterest content script active");
 
 const observer = new MutationObserver(() => {
   PinterestHelper.processPinsOnce().then(PinterestHelper.observeVisiblePins);

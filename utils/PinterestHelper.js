@@ -123,7 +123,7 @@ class PinterestHelper {
         const btnContainer = document.createElement("div");
         btnContainer.style.display = "contents";
         btnContainer.style.fontSize = "16px";
-      
+
 
         //-- Nút mở info chi tiết
         const infoBtn = document.createElement("button");
@@ -149,7 +149,7 @@ class PinterestHelper {
         downloadBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             // TODO: Implement download functionality
-          
+
             if (linkImage) {
                 const a = document.createElement('a');
                 a.href = linkImage;
@@ -165,32 +165,25 @@ class PinterestHelper {
         const linkWebsite = document.createElement("a");
         linkWebsite.href = info?.link ?? "#";
         linkWebsite.target = "_blank";
-        linkWebsite.text ="🔗";
+        linkWebsite.text = "🔗";
         linkWebsite.style.cursor = "pointer";
         linkWebsite.style.color = "#fff";
         linkWebsite.style.textDecoration = "none";
         linkWebsite.style.display = "contents";
-        
+
 
         btnContainer.appendChild(infoBtn);
         btnContainer.appendChild(downloadBtn);
         btnContainer.appendChild(linkWebsite);
         box.appendChild(btnContainer);
 
-        // const link = document.createElement("a");
-        // link.href = linkImage ?? "#";
-        // link.target = "_blank";
-        // link.textContent = "🔗 Open Pin";
-        // link.style.color = "#fff";
-        // link.style.textDecoration = "none";
-        // box.appendChild(link);
 
         // Gắn overlay vào pin
         pinEl.style.position = pinEl.style.position || "relative";
         pinEl.appendChild(box);
     }
 
-    
+
     // Hiển thị tooltip chi tiết khi nhấn nút
     /**
      * Hiển thị tooltip với thông tin chi tiết của pin
@@ -276,18 +269,29 @@ class PinterestHelper {
                 if (!id) continue;
                 if (pin.querySelector(".ext-pin-info-box")) continue;
 
-                const key = this.cacheKey(id);
+                const key = PinterestHelper.cacheKey(id);
                 let info = null;
-                try {
-                    const raw = sessionStorage.getItem(key);
-                    if (raw) info = JSON.parse(raw);
-                } catch (e) { info = null; }
+                chrome.storage.local.get(`${key}`, (data) => {
+                    const raw = data[key];
+                    try {
+                        if (raw) info = JSON.parse(raw);
+                    } catch (e) {
+                        console.log(e);
+                    }
+
+                });
 
                 if (!info) {
                     const fetched = await this.fetchPinDetail(id);
                     if (!fetched) continue;
                     info = fetched;
-                    try { sessionStorage.setItem(key, JSON.stringify(info)); } catch { }
+                    // Cho vào chrome storage
+                    if (info && Object.keys(info).length > 0) {
+                        chrome.storage.local.set({ [key]: info }, () => {
+                            console.log(`✅ Pin ${key} đã được lưu`);
+                        });
+                    }
+
                 }
 
                 this.attachOverlayToPin(pin, info);
@@ -315,20 +319,30 @@ class PinterestHelper {
                     const id = Helper.extractPinIdFromElement(pin);
                     if (!id || pin.querySelector(".ext-pin-info-box")) continue;
 
-                    const key = this.cacheKey(id);
+                    const key = PinterestHelper.cacheKey(id);
                     let info = null;
-                    try {
-                        const raw = sessionStorage.getItem(key);
-                        if (raw) info = JSON.parse(raw);
-                    } catch { }
+                    chrome.storage.local.get(`${key}`, (data) => {
+                        const raw = data[key];
+                        try {
+                            if (raw) info = JSON.parse(raw);
+                        } catch (e) {
+                            console.log(e);
+                        }
+
+                    });
+
 
                     if (!info) {
                         const fetched = await this.fetchPinDetail(id);
                         if (!fetched) continue;
                         info = fetched;
-                        try { sessionStorage.setItem(key, JSON.stringify(info)); } catch { }
+                        // Cho vào chrome storage
+                        if (info && Object.keys(info).length > 0) {
+                            chrome.storage.local.set({ [key]: info }, () => {
+                                console.log(`✅ Pin ${key} đã được lưu`);
+                            });
+                        }
                     }
-
                     this.attachOverlayToPin(pin, info);
                 }
             }
