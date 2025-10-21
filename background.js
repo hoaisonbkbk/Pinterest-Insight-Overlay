@@ -28,10 +28,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
-// (Tùy chọn) Lắng nghe click vào action icon trên thanh Chrome
+// Lắng nghe click vào action icon trên thanh Chrome để mở panel trong tab mới
 chrome.action.onClicked.addListener((tab) => {
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ["content-script.js"],
-  });
+  chrome.tabs.create({ url: chrome.runtime.getURL("popup/panel.html") });
 });
