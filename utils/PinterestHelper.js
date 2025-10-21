@@ -93,11 +93,12 @@ class PinterestHelper {
 
         // Đọc thông tin từ dữ liệu đã lấy
         let reaction = Helper.formatNumberLocale(info.reaction_counts["1"] ?? 0);
-        let comment = Helper.formatNumberLocale(info.aggregated_pin_data.comment_count ?? 0);
-        let save = Helper.formatNumberLocale(info.aggregated_pin_data.aggregated_stats.saves ?? 0);
+        let comment = Helper.formatNumberLocale(info?.aggregated_pin_data?.comment_count ?? 0);
+        let save = Helper.formatNumberLocale(info?.aggregated_pin_data?.aggregated_stats?.saves ?? 0);
         let repin = Helper.formatNumberLocale(info.repin_count ?? 0);
         let share = Helper.formatNumberLocale(info.share_count ?? 0);
         let linkImage = info.images?.orig?.url ?? "";
+        let createdAt = Helper.formatDateTime(info.created_at ?? "", true);
         // Giờ là gán dữ liệu vào overlay
         const likes = document.createElement("div");
         likes.textContent = `❤️ Reaction: ${reaction}`;
@@ -109,12 +110,14 @@ class PinterestHelper {
         repins.textContent = `🔁 Repin: ${repin}`
         const shares = document.createElement("div");
         shares.textContent = `📤 Share: ${share}`;
-
+        const created = document.createElement("div");
+        created.textContent = `📅 Created: ${createdAt}`;
         box.appendChild(likes);
         box.appendChild(comments);
         box.appendChild(saves);
         box.appendChild(repins);
         box.appendChild(shares);
+        box.appendChild(created);
 
         //-- Container cho các nút
         const btnContainer = document.createElement("div");
@@ -146,10 +149,10 @@ class PinterestHelper {
         downloadBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             // TODO: Implement download functionality
-            const imageUrl = info.images?.orig?.url;
-            if (imageUrl) {
+          
+            if (linkImage) {
                 const a = document.createElement('a');
-                a.href = imageUrl;
+                a.href = linkImage;
                 a.target = "_blank";
                 a.download = `pinterest_${info.id}.jpg`;
                 document.body.appendChild(a);
@@ -214,10 +217,10 @@ class PinterestHelper {
     static showDetailTooltip(pinEl, info) {
         // Lấy thông tin chi tiết
         let reaction = Helper.formatNumberLocale(info.reaction_counts["1"] ?? 0);
-        let comment = Helper.formatNumberLocale(info.aggregated_pin_data.comment_count ?? 0);
-        let save = Helper.formatNumberLocale(info.aggregated_pin_data.aggregated_stats.saves ?? 0);
-        let repin = Helper.formatNumberLocale(info.repin_count ?? 0);
-        let share = Helper.formatNumberLocale(info.share_count ?? 0);
+        let comment = Helper.formatNumberLocale(info.aggregated_pin_data?.comment_count ?? 0);
+        let save = Helper.formatNumberLocale(info?.aggregated_pin_data?.aggregated_stats?.saves ?? 0);
+        let repin = Helper.formatNumberLocale(info?.repin_count ?? 0);
+        let share = Helper.formatNumberLocale(info?.share_count ?? 0);
 
 
         document.querySelectorAll(".ext-pin-tooltip").forEach((t) => t.remove());

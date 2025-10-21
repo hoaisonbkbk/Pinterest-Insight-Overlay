@@ -38,5 +38,32 @@ class Helper {
         }
         return null;
     }
+    /**
+ * Chuyển chuỗi thời gian sang định dạng yyyy-MM-dd HH:mm
+ * @param {string} dateStr - Chuỗi thời gian, ví dụ: "Mon, 06 Oct 2025 16:29:21 +0000"
+ * @param {boolean} [useUTC=false] - Nếu true, hiển thị theo giờ UTC; mặc định là giờ địa phương
+ * @returns {string} Chuỗi thời gian định dạng yyyy-MM-dd HH:mm
+ */
+    static formatDateTime(dateStr, useUTC = false) {
+  // Chuẩn hóa timezone (thêm dấu ':' nếu thiếu)
+  const fixedDateStr = dateStr.replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
+  const date = new Date(fixedDateStr);
+
+  if (isNaN(date)) {
+    console.error("❌ Lỗi: Không parse được chuỗi thời gian:", dateStr);
+    return null;
+  }
+
+  const pad = (num) => num.toString().padStart(2, '0');
+
+  const year = useUTC ? date.getUTCFullYear() : date.getFullYear();
+  const month = useUTC ? date.getUTCMonth() + 1 : date.getMonth() + 1;
+  const day = useUTC ? date.getUTCDate() : date.getDate();
+  const hours = useUTC ? date.getUTCHours() : date.getHours();
+  const minutes = useUTC ? date.getUTCMinutes() : date.getMinutes();
+
+  return `${year}-${pad(month)}-${pad(day)} ${pad(hours)}:${pad(minutes)}`;
+}
+
 
 }
