@@ -1,86 +1,112 @@
+/**
+ * Lớp PinterestPanel quản lý giao diện bảng điều khiển của extension Pinterest Insight Overlay
+ * Chức năng chính:
+ * - Hiển thị danh sách các pin đã thu thập
+ * - Tìm kiếm và lọc dữ liệu
+ * - Sắp xếp theo các trường khác nhau
+ * - Phân trang dữ liệu
+ * - Xuất dữ liệu ra CSV
+ * - Xóa pin khỏi bộ nhớ
+ */
 class PinterestPanel {
+    /**
+     * Khởi tạo đối tượng PinterestPanel
+     * Thiết lập các thuộc tính ban đầu và gọi các phương thức khởi tạo
+     */
     constructor() {
-        this.currentPage = 1;
-        this.recordsPerPage = 10;
-        this.sortField = 'createAt';
-        this.sortDirection = 'desc';
-        this.searchTerm = '';
-        this.data = [];
-        this.toast = new bootstrap.Toast(document.getElementById('toast'));
+        this.currentPage = 1; // Trang hiện tại
+        this.recordsPerPage = 10; // Số bản ghi mỗi trang
+        this.sortField = 'createAt'; // Trường sắp xếp mặc định
+        this.sortDirection = 'desc'; // Hướng sắp xếp mặc định (giảm dần)
+        this.searchTerm = ''; // Từ khóa tìm kiếm
+        this.data = []; // Mảng chứa dữ liệu các pin
+        this.toast = new bootstrap.Toast(document.getElementById('toast')); // Đối tượng toast để hiển thị thông báo
 
-        // Load data from chrome.storage
+        // Tải dữ liệu từ chrome.storage
         this.loadData();
 
-        // Initialize event listeners
+        // Khởi tạo các event listener
         this.initializeEventListeners();
 
-        // Initial render
+        // Render bảng lần đầu
         this.renderTable();
     }
 
+    /**
+     * Tải dữ liệu pin từ chrome.storage.local
+     * Lọc các key bắt đầu bằng "pin_detail_" và chuyển đổi thành định dạng pin
+     */
     async loadData() {
         chrome.storage.local.get(null, (items) => {
+            // Lọc các key chứa thông tin pin
             const keys = Object.keys(items).filter(key => key.startsWith("pin_detail_"));
             if(!keys || keys.length === 0) {
-                console.log("No pin data found in storage.");
+                console.log("Không tìm thấy dữ liệu pin nào trong bộ nhớ.");
                 return;
             }
-            console.log("📦 List of keys:", keys);
+            console.log("📦 Danh sách các key:", keys);
+            // Chuyển đổi dữ liệu từ storage thành định dạng pin
             this.data = keys.map(key => this.mapInfoToPin(items[key]));
-            console.log("📥 Loaded pin data:", this.data);
+            console.log("📥 Đã tải dữ liệu pin:", this.data);
+            // Render lại bảng sau khi tải dữ liệu
             this.renderTable();
         });
     }
 
-    
-
+    /**
+     * Chuyển đổi thông tin pin từ API thành định dạng phù hợp cho bảng
+     * @param {Object} info - Thông tin pin từ API Pinterest
+     * @returns {Object} Đối tượng pin đã được format
+     */
     mapInfoToPin(info) {
         return {
-            id: info.id,
-            title: info.title,
-            description: info.description,
-            author: info.pinner?.username,
-            followerCount: info.pinner?.follower_count,
-            board: info.board?.name,
-            boardUrl: info.board?.url,
-            pinUrl: info.link,
-            imageUrl: info.images?.orig?.url,
-            reaction: info.reaction_counts?.["1"] || 0,
-            comment: info.aggregated_pin_data?.comment_count || 0,
-            save: info.aggregated_pin_data?.aggregated_stats?.saves || 0,
-            repin: info.repin_count || 0,
-            share: info.share_count || 0,
-            createAt: info.created_at
+            id: info.id, // ID của pin
+            title: info.title, // Tiêu đề pin
+            description: info.description, // Mô tả pin
+            author: info.pinner?.username, // Tên tác giả
+            followerCount: info.pinner?.follower_count, // Số lượng follower của tác giả
+            board: info.board?.name, // Tên board
+            boardUrl: info.board?.url, // URL của board
+            pinUrl: info.link, // URL của pin
+            imageUrl: info.images?.orig?.url, // URL ảnh gốc
+            reaction: info.reaction_counts?.["1"] || 0, // Số lượt reaction
+            comment: info.aggregated_pin_data?.comment_count || 0, // Số lượt comment
+            save: info.aggregated_pin_data?.aggregated_stats?.saves || 0, // Số lượt save
+            repin: info.repin_count || 0, // Số lượt repin
+            share: info.share_count || 0, // Số lượt share
+            createAt: info.created_at // Thời gian tạo
         };
     }
 
-    // Removed fake data initialization - now only loads real collected data
-
+    /**
+     * Khởi tạo tất cả các event listener cho các thành phần giao diện
+     * Bao gồm: tìm kiếm, phân trang, sắp xếp, xuất dữ liệu
+     */
     initializeEventListeners() {
-        // Search input with debounce
+        // Event listener cho ô tìm kiếm với debounce để tránh gọi API quá nhiều
         let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 this.searchTerm = e.target.value.toLowerCase();
-                this.currentPage = 1;
+                this.currentPage = 1; // Reset về trang đầu khi tìm kiếm
                 this.renderTable();
-            }, 300);
+            }, 300); // Đợi 300ms sau lần nhập cuối cùng
         });
 
-        // Records per page
+        // Event listener cho việc thay đổi số bản ghi mỗi trang
         document.getElementById('recordsPerPage').addEventListener('change', (e) => {
             this.recordsPerPage = parseInt(e.target.value);
-            this.currentPage = 1;
+            this.currentPage = 1; // Reset về trang đầu
             this.renderTable();
         });
 
-        // Sorting
+        // Event listener cho các header có thể sắp xếp
         document.querySelectorAll('th[data-sort]').forEach(th => {
             th.addEventListener('click', () => this.handleSort(th.dataset.sort));
         });
 
-        // Pagination
+        // Event listener cho nút Previous trong phân trang
         document.getElementById('prevPage').addEventListener('click', (e) => {
             e.preventDefault();
             if (this.currentPage > 1) {
@@ -89,6 +115,7 @@ class PinterestPanel {
             }
         });
 
+        // Event listener cho nút Next trong phân trang
         document.getElementById('nextPage').addEventListener('click', (e) => {
             e.preventDefault();
             if (this.currentPage < this.getTotalPages()) {
@@ -97,32 +124,49 @@ class PinterestPanel {
             }
         });
 
-        // Export button
+        // Event listener cho nút Export CSV
         document.getElementById('exportBtn').addEventListener('click', () => this.exportToCSV());
     }
 
+    /**
+     * Xử lý sự kiện sắp xếp khi click vào header của cột
+     * @param {string} field - Tên trường cần sắp xếp
+     */
     handleSort(field) {
         if (this.sortField === field) {
+            // Nếu đang sắp xếp theo trường này, đổi hướng sắp xếp
             this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
+            // Nếu sắp xếp theo trường mới, mặc định là tăng dần
             this.sortField = field;
             this.sortDirection = 'asc';
         }
-        this.renderTable();
+        this.renderTable(); // Render lại bảng sau khi sắp xếp
     }
 
+    /**
+     * Lọc dữ liệu dựa trên từ khóa tìm kiếm
+     * @returns {Array} Mảng dữ liệu đã được lọc
+     */
     getFilteredData() {
         return this.data.filter(item => {
+            // Tạo chuỗi tìm kiếm từ ID, tác giả và board
             const searchStr = `${item.id} ${item.author} ${item.board}`.toLowerCase();
             return searchStr.includes(this.searchTerm);
         });
     }
 
+    /**
+     * Sắp xếp dữ liệu đã lọc theo trường và hướng đã chọn
+     * @param {Array} filteredData - Dữ liệu đã lọc
+     * @returns {Array} Dữ liệu đã sắp xếp
+     */
     getSortedData(filteredData) {
         return filteredData.sort((a, b) => {
             let aValue = a[this.sortField];
             let bValue = b[this.sortField];
 
+            // Nếu là chuỗi, chuyển về lowercase để sắp xếp không phân biệt hoa thường
             if (typeof aValue === 'string') {
                 aValue = aValue.toLowerCase();
                 bValue = bValue.toLowerCase();
@@ -134,25 +178,49 @@ class PinterestPanel {
         });
     }
 
+    /**
+     * Phân trang dữ liệu đã sắp xếp
+     * @param {Array} sortedData - Dữ liệu đã sắp xếp
+     * @returns {Array} Dữ liệu của trang hiện tại
+     */
     getPaginatedData(sortedData) {
         const start = (this.currentPage - 1) * this.recordsPerPage;
         const end = start + this.recordsPerPage;
         return sortedData.slice(start, end);
     }
 
+    /**
+     * Tính tổng số trang dựa trên dữ liệu đã lọc và số bản ghi mỗi trang
+     * @returns {number} Tổng số trang
+     */
     getTotalPages() {
         return Math.ceil(this.getFilteredData().length / this.recordsPerPage);
     }
 
+    /**
+     * Format ngày tháng theo định dạng địa phương
+     * @param {string} dateString - Chuỗi ngày tháng
+     * @returns {string} Chuỗi ngày tháng đã format
+     */
     formatDate(dateString) {
         const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
         return new Date(dateString).toLocaleDateString(undefined, options);
     }
 
+    /**
+     * Format số theo định dạng địa phương (có dấu phân cách)
+     * @param {number} num - Số cần format
+     * @returns {string} Chuỗi số đã format
+     */
     formatNumber(num) {
         return new Intl.NumberFormat().format(num);
     }
 
+    /**
+     * Render HTML cho các thống kê của pin (không sử dụng trong phiên bản hiện tại)
+     * @param {Object} item - Đối tượng pin
+     * @returns {string} HTML string của thống kê
+     */
     renderStats(item) {
         return `
             <div class="d-flex flex-wrap gap-1">
@@ -165,21 +233,27 @@ class PinterestPanel {
         `;
     }
 
+    /**
+     * Render bảng dữ liệu với phân trang, sắp xếp và tìm kiếm
+     * Phương thức này được gọi mỗi khi có thay đổi về dữ liệu hoặc trạng thái
+     */
     renderTable() {
+        // Lấy dữ liệu đã lọc, sắp xếp và phân trang
         const filteredData = this.getFilteredData();
         const sortedData = this.getSortedData(filteredData);
         const paginatedData = this.getPaginatedData(sortedData);
 
+        // Render HTML cho các hàng trong bảng
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = paginatedData.map(item => `
             <tr>
-                <td class="text-nowrap">${item.id || 'No Data'}</td>
-                <td class="text-truncate" title="${item.title || 'No Data'}" width="200px">
+                <td class="text-nowrap">${item.id || 'Không có dữ liệu'}</td>
+                <td class="text-truncate" title="${item.title || 'Không có dữ liệu'}" width="200px">
                     ${item.title ? `<a href="${item.pinUrl}"
                        target="_blank"
                        class="text-decoration-none">
                         ${item.title}
-                    </a>` : 'No Data'}
+                    </a>` : 'Không có dữ liệu'}
                 </td>
                 <td class="text-nowrap">${this.formatNumber(item.reaction || 0)}</td>
                 <td class="text-nowrap">${this.formatNumber(item.comment || 0)}</td>
@@ -191,29 +265,29 @@ class PinterestPanel {
                        target="_blank"
                        class="text-decoration-none">
                         ${item.author}
-                    </a> (Flws: ${this.formatNumber(item.followerCount) || 0})` : 'No Data'}
+                    </a> (Flws: ${this.formatNumber(item.followerCount) || 0})` : 'Không có dữ liệu'}
                 </td>
-                <td width="200px" class="text-truncate" title="${item.board || 'No Data'}">
+                <td width="200px" class="text-truncate" title="${item.board || 'Không có dữ liệu'}">
                     ${item.board ? `<a href="${item.boardUrl}"
                        target="_blank"
                        class="text-decoration-none">
                         ${item.board}
-                    </a>` : 'No Data'}
+                    </a>` : 'Không có dữ liệu'}
                 </td>
 
-                <td class="text-nowrap">${item.createAt ? Helper.formatDateTime(item.createAt) : 'No Data'}</td>
+                <td class="text-nowrap">${item.createAt ? Helper.formatDateTime(item.createAt) : 'Không có dữ liệu'}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-danger deletePinBtn"
                         data-id = "${item.id}"
 
-                            title="Delete pin">
+                            title="Xóa pin">
                         <i class="fa fa-trash"></i>
                     </button>
                 </td>
             </tr>
         `).join('');
 
-        // Add event listeners for delete buttons
+        // Thêm event listener cho các nút xóa pin
         document.querySelectorAll('.deletePinBtn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const pinId = e.target.closest('.deletePinBtn').dataset.id;
@@ -221,7 +295,7 @@ class PinterestPanel {
             });
         });
 
-        // Update pagination info
+        // Cập nhật thông tin phân trang
         const startRecordEl = document.getElementById('startRecord');
         const endRecordEl = document.getElementById('endRecord');
         const totalRecordsEl = document.getElementById('totalRecords');
@@ -232,7 +306,7 @@ class PinterestPanel {
             Math.min(this.currentPage * this.recordsPerPage, filteredData.length);
         if (totalRecordsEl) totalRecordsEl.textContent = filteredData.length;
 
-        // Update pagination buttons
+        // Cập nhật trạng thái các nút phân trang
         const prevPageEl = document.getElementById('prevPage');
         const nextPageEl = document.getElementById('nextPage');
 
@@ -243,7 +317,7 @@ class PinterestPanel {
             nextPageEl.parentElement.classList.toggle('disabled', this.currentPage === this.getTotalPages());
         }
 
-        // Update sort icons
+        // Cập nhật icon sắp xếp cho các header
         document.querySelectorAll('th[data-sort]').forEach(th => {
             const icon = th.querySelector('.sort-icon');
             if (icon) {
@@ -256,6 +330,11 @@ class PinterestPanel {
         });
     }
 
+    /**
+     * Hiển thị thông báo toast
+     * @param {string} title - Tiêu đề thông báo
+     * @param {string} message - Nội dung thông báo
+     */
     showToast(title, message) {
         const toastTitle = document.getElementById('toastTitle');
         const toastMessage = document.getElementById('toastMessage');
@@ -268,15 +347,24 @@ class PinterestPanel {
         }
     }
 
+    /**
+     * Sao chép văn bản vào clipboard (không sử dụng trong phiên bản hiện tại)
+     * @param {string} text - Văn bản cần sao chép
+     */
     copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
-            this.showToast('Success', 'URL copied to clipboard');
+            this.showToast('Thành công', 'URL đã được sao chép vào clipboard');
         }).catch(err => {
-            this.showToast('Error', 'Failed to copy URL');
-            console.error('Copy failed:', err);
+            this.showToast('Lỗi', 'Không thể sao chép URL');
+            console.error('Lỗi sao chép:', err);
         });
     }
 
+    /**
+     * Tải ảnh từ URL (không sử dụng trong phiên bản hiện tại)
+     * @param {string} url - URL của ảnh
+     * @param {string} pinId - ID của pin
+     */
     downloadImage(url, pinId) {
         const a = document.createElement('a');
         a.href = url;
@@ -284,38 +372,48 @@ class PinterestPanel {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        this.showToast('Success', 'Download started');
+        this.showToast('Thành công', 'Đã bắt đầu tải xuống');
     }
 
+    /**
+     * Xóa pin khỏi bộ nhớ và giao diện
+     * @param {string} pinId - ID của pin cần xóa
+     */
     async deletePin(pinId) {
-        if (confirm('Are you sure you want to delete this pin?')) {
+        if (confirm('Bạn có chắc chắn muốn xóa pin này?')) {
             try {
-                // Remove from data array
+                // Xóa khỏi mảng dữ liệu
                 this.data = this.data.filter(item => item.id !== pinId);
 
-                // Remove from chrome.storage.local
+                // Xóa khỏi chrome.storage.local
                 const key = `pin_detail_${pinId}`;
                 await chrome.storage.local.remove(key);
 
-                // Refresh table
+                // Làm mới bảng
                 this.renderTable();
 
-                this.showToast('Success', 'Pin deleted successfully');
-                console.log('Deleted pin:', pinId);
+                this.showToast('Thành công', 'Đã xóa pin thành công');
+                console.log('Đã xóa pin:', pinId);
             } catch (error) {
-                console.error('Error deleting pin:', error);
-                this.showToast('Error', 'Failed to delete pin');
+                console.error('Lỗi khi xóa pin:', error);
+                this.showToast('Lỗi', 'Không thể xóa pin');
             }
         }
     }
 
+    /**
+     * Xuất dữ liệu pin ra file CSV
+     * Tạo file CSV với tất cả dữ liệu đã lọc và sắp xếp
+     */
     exportToCSV() {
         const filteredData = this.getFilteredData();
         const sortedData = this.getSortedData(filteredData);
 
-        const headers = ['Pin ID', 'Title', 'Description', 'Author', 'Board', 'Reactions', 'Comments', 'Saves',
-            'Image URL', 'Created At', 'Board URL', 'Pin URL'];
+        // Định nghĩa các header cho file CSV
+        const headers = ['Pin ID', 'Tiêu đề', 'Mô tả', 'Tác giả', 'Board', 'Lượt thích', 'Bình luận', 'Lưu',
+            'URL ảnh', 'Ngày tạo', 'URL Board', 'URL Pin'];
 
+        // Tạo nội dung CSV
         const csvContent = [
             headers.join(','),
             ...sortedData.map(item => [
@@ -334,6 +432,7 @@ class PinterestPanel {
             ].map(field => `"${field}"`).join(','))
         ].join('\n');
 
+        // Tạo blob và tải xuống file
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -344,11 +443,11 @@ class PinterestPanel {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        this.showToast('Success', 'CSV file exported successfully');
+        this.showToast('Thành công', 'Đã xuất file CSV thành công');
     }
 }
 
-// Initialize when DOM is loaded
+// Khởi tạo đối tượng PinterestPanel khi DOM đã tải xong
 document.addEventListener('DOMContentLoaded', () => {
     window.pinterestPanel = new PinterestPanel();
 });
